@@ -2,6 +2,7 @@ import os
 import json
 
 from datetime import datetime
+from sqlalchemy import inspect
 
 from sqlalchemy import ForeignKey, desc, create_engine, func, Column, BigInteger, Integer, Float, String, Boolean, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
@@ -60,20 +61,17 @@ session = Session()
 
 class Operations:
 
-  def ToDict(data):
-    results = []
-    for x in data:
-      results.append(x.JSON())
-
-    return results
+  def object_as_dict(obj):
+    return {c.key: getattr(obj, c.key)
+            for c in inspect(obj).mapper.column_attrs}
 
   def GetCities(as_dict = True):
-    data = session.query(City.Name).all()
+    data = session.query(City).all()
 
     if as_dict:
-      data = Operations.ToDict(data)
+      data = [Operations.object_as_dict(x) for x in data]
 
-    return [x for x in data]
+    return data
 
 if __name__ == "__main__":
   print(Operations.GetCities())

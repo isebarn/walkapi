@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def cities():
-  return 'Hello'
+  return jsonify(Operations.GetCities())
 
 if __name__ == "__main__":
   print(a)
