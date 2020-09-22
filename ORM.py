@@ -11,6 +11,7 @@ from geoalchemy2 import Geometry
 from geoalchemy2.shape import to_shape
 from shapely.geometry import mapping, shape
 import json
+from pprint import pprint
 
 if os.environ.get('DATABASE') is not None:
   connectionString = os.environ.get('DATABASE')
@@ -19,17 +20,30 @@ engine = create_engine(connectionString, echo=False)
 
 Base = declarative_base()
 
+def json_object(_object):
+  data = dict(_object.__dict__)
+  data.pop('_sa_instance_state', None)
+  return data
+
+def json_child_list(data, name):
+  if name in data:
+    data[name] = [_object.json() for _object in data[name]]
+
+def json_child_object(data, name):
+  if name in data:
+    data[name] = data[name].json()
+
 class City(Base):
   __tablename__ = 'cities'
 
   Id = Column('id', Integer, primary_key=True)
   Name = Column('name', Text)
 
-  def JSON(self):
-    data = {}
-    data['Id'] = self.Id
-    data['Name'] = self.Name
+  def __init__(self, name):
+    self.Name = name
 
+  def json(self):
+    data = json_object(self)
     return data
 
 class Tour(Base):
@@ -42,6 +56,17 @@ class Tour(Base):
   Duration = Column('duration', Integer)
   Path = relationship("Path", lazy='joined')
 
+  def __init__(self, data):
+    self.CityId = data['CityId']
+    self.Name = data['Name']
+    self.Description = data['Description']
+    self.Duration = data['Duration']
+
+  def json(self):
+    data = json_object(self)
+    json_child_list(data, 'Path')
+    return data
+
 class Path(Base):
   __tablename__ = 'paths'
 
@@ -50,12 +75,32 @@ class Path(Base):
   Coordinate = Column('coordinate', Geometry('POINT'))
   Stop = relationship("Stop", lazy='joined')
 
+  def __init__(self, data):
+    self.TourId = data['TourId']
+    self.Coordinate = "POINT({} {})".format(data['latitude'], data['longitude'])
+
+  def json(self):
+    data = json_object(self)
+    data['x'] = to_shape(data['Coordinate']).x
+    data['y'] = to_shape(data['Coordinate']).y
+    data.pop('Coordinate', None)
+    json_child_list(data, 'Stop')
+    return data
+
 class Stop(Base):
   __tablename__ = 'stops'
 
   Id = Column('id', Integer, primary_key=True)
   PathId = Column('PathId', Integer, ForeignKey('paths.id'))
   Content = Column('content', Text)
+
+  def __init__(self, data):
+    self.PathId = data['PathId']
+    self.Content = data['content']
+
+  def json(self):
+    data = json_object(self)
+    return data
 
 
 Base.metadata.create_all(engine)
@@ -66,17 +111,12 @@ session = Session()
 
 class Operations:
 
-  def object_as_dict(obj):
-    return {c.key: getattr(obj, c.key)
-            for c in inspect(obj).mapper.column_attrs}
-
   def GetCities(as_dict = True):
-    data = session.query(City).all()
+    return list(map(City.json, session.query(City).all()))
 
-    if as_dict:
-      data = [Operations.object_as_dict(x) for x in data]
-
-    return data
+  def SaveCity(name):
+    session.add(City(name))
+    session.commit()
 
   def GetTourByCity(city_id, as_dict = True):
     data = session.query(Tour).filter_by(CityId=city_id).all()
@@ -86,30 +126,29 @@ class Operations:
 
     return data
 
-  def GetTour(tour_id, as_dict = True):
+  def GetTour(tour_id):
     data = session.query(Tour).options(
       subqueryload('Path').subqueryload('Stop')).get(tour_id)
 
-    if as_dict:
-      result = Operations.object_as_dict(data)
-      result["Path"] = []
-      for x in data.Path:
-
-        # turn the basic Path object into a dict
-        path = Operations.object_as_dict(x)
-
-        # turn the Path.Stop array into a dict
-        path['Stop'] = [Operations.object_as_dict(y) for y in x.Stop]
-
-        # convert the Path.Coordinate object into a json object
-        path["Coordinate"] = json.loads(json.dumps(mapping(to_shape(path["Coordinate"]))))
-        result["Path"].append(path)
-
-
-      data = result
-
     return data
+
+  def SaveTour(data):
+    pprint(data)
+    tour = Tour(data)
+    session.add(tour)
+    session.flush()
+
+    for item in data['Path']:
+      item['TourId'] = tour.Id
+      path = Path(item)
+      session.add(path)
+      session.flush()
+      item['PathId'] = path.Id
+      session.add(Stop(item))
+
+    session.commit()
+
 
 
 if __name__ == "__main__":
-  print(Operations.GetTour(1))
+  pprint(Operations.GetTour(3).json())
