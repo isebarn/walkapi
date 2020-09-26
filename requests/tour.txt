@@ -1,0 +1,40 @@
+requests.get('http://localhost:5000/tours/tour?tour=3')
+
+200 OK
+0.022746s, 395B
+http://localhost:5000/tours/tour?tour=3
+
+Request Headers: {'User-Agent': 'python-requests/2.18.3', 'Connection': 'keep-alive', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*'}
+
+[ctrl+r] replay request, [ctrl+alt+ ←/→] prev/next request, [ctrl+t] pin/unpin tab, [ctrl+s] save request, [ctrl+e] explore URL
+
+Access-Control-Allow-Origin: http://localhost:3000
+Content-Length: 395
+Content-Type: application/json
+Date: Sat, 26 Sep 2020 11:58:57 GMT
+Server: Werkzeug/1.0.1 Python/3.6.8
+
+{
+  "tours": {
+    "CityId": 1,
+    "Description": "test tour description",
+    "Duration": 12,
+    "Id": 3,
+    "Name": "test tour name",
+    "Path": [
+      {
+        "Id": 2,
+        "Stop": [
+          {
+            "Content": "heh",
+            "Id": 1,
+            "PathId": 2
+          }
+        ],
+        "TourId": 3,
+        "x": 2.13,
+        "y": 2.31
+      }
+    ]
+  }
+}

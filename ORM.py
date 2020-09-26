@@ -130,7 +130,7 @@ class Operations:
     data = session.query(Tour).options(
       subqueryload('Path').subqueryload('Stop')).get(tour_id)
 
-    return data
+    return data.json()
 
   def SaveTour(data):
     pprint(data)
@@ -151,4 +151,4 @@ class Operations:
 
 
 if __name__ == "__main__":
-  pprint(Operations.GetTour(3).json())
+  pprint(Operations.GetTour(3))

@@ -38,4 +38,6 @@ def add_tour():
   return jsonify({ 'heh': 1 })
 
 if __name__ == "__main__":
-  tour()
+  pass
+  print(1)
+  #requests.get('http://localhost:5000/tours/tour?tour=3')
