@@ -118,13 +118,10 @@ class Operations:
     session.add(City(name))
     session.commit()
 
-  def GetTourByCity(city_id, as_dict = True):
+  def GetTourByCity(city_id):
     data = session.query(Tour).filter_by(CityId=city_id).all()
 
-    if as_dict:
-      data = [Operations.object_as_dict(x) for x in data]
-
-    return data
+    return [x.json() for x in data]
 
   def GetTour(tour_id):
     data = session.query(Tour).options(
@@ -151,4 +148,4 @@ class Operations:
 
 
 if __name__ == "__main__":
-  pprint(Operations.GetTour(3))
+  pprint(Operations.GetTourByCity(6))

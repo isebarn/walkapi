@@ -13,7 +13,7 @@ cors = CORS(app, resources={r"*": {"origins": os.environ.get('WEB')}})
 
 @app.route('/cities')
 def cities():
-  return jsonify(Operations.GetCities())
+  return jsonify({ 'cities': Operations.GetCities()})
 
 @app.route('/cities/add')
 def add_city():
