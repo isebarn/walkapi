@@ -24,7 +24,7 @@ def add_city():
 @app.route('/tours')
 def tours():
   city = request.args.get('city', default = 0, type = int)
-  return jsonify({ 'tours':  Operations.GetTourByCity(city)})
+  return jsonify({ 'tour':  Operations.GetTourByCity(city)})
 
 @app.route('/tours/tour')
 def tour():
